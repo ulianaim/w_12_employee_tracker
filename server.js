@@ -206,7 +206,7 @@ const addEmployee = () => {
         .then(answer => {
             const roleID = roleNames[answer.roles];
             const managerID = managers[answer.managers];
-            connection.query('INSERt INTO employee SET ?',
+            connection.query('INSERT INTO employee SET ?',
             {
                 first_name: answer.firstName,
                 last_name: answer.lastName,
@@ -222,5 +222,92 @@ const addEmployee = () => {
     });
  });
 };
+
+const updateEmployeeRole = () => {
+    connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (err, res) => {
+        if (err) throw err;
+
+        const employees = res.reduce((acc, curr) => {
+            acc[curr.name] = curr.id;
+            return acc;
+        }, {});
+
+    connection.query('SELECT id, title FROM role', (err, res) => {
+        if (err) throw err;
+
+        const roles = res.reduce((acc, curr) => {
+            acc[curr.name] = curr.id;
+            return acc;
+        }, {});
+
+    inquirer.prompt ([
+        {
+            name:'employee',
+            type: 'list',
+            message: 'Please select employee to update:',
+            choices: Object.keys(employees),
+        },
+        {
+            name:'role',
+            type: 'list',
+            message: 'Please select new role:',
+            choices: Object.keys(roles),
+        },
+    ])
+        .then(answer => {
+            const employeeId = employees[answer.employee];
+            const roleId = roles[answer.role];
+
+            connection.query('UPDATE employee SET role_id = ? WHERE id = ?',
+            [roleId,employeeId],
+            function (err, res) {
+                if (err) throw err;
+                console.log(`Role has been successfully updated for ${answer.employee}`);
+                startMenu();
+            });
+        });
+    });
+ });
+};
+
+const deleteDepartment = () => {
+    connection.query('SELECT * FROM department', (err, res) => {
+        if (err) throw err;
+
+        const departments = res.map((department) => ({
+            name: department.name,
+            value: department.id,
+        }));
+    inquirer.prompt([
+        {
+        name: 'departmentID',
+        type: 'list',
+        message: 'Which department would you like to delete?',
+        choices: departments,
+        },
+        {
+            name: 'confirm',
+            type: 'confirm',
+            message: 'Are you sure you want to delete this department?',
+            default: false,
+        },
+    ])
+    .then((answer) => {
+        if (answer.confirm) {
+            connection.query('DELETE FROM department WHERE id = ?',
+            [answer.departmentID],
+            (err, res) => {
+                if (err) throw err;
+                console.log("Department was successfully deleted");
+                startMenu();
+            });
+        } else {
+            console.log("No Departments were deleted");
+            startMenu();
+        }
+    });
+    });
+};
+
 
 
