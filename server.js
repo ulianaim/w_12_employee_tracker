@@ -1,13 +1,12 @@
 const inquirer = require('inquirer');
-const mysql = reqiure('mysql2');
+const mysql = require('mysql2');
 const cTable = require('console.table');
 
 const connection = mysql.createConnection({
-    host: 'localhost',
-    port: 3001,
+    host: '127.0.0.1',
     user: 'root',
     password: '',
-    database: 'company_db',
+    database: 'company_db'
 });
 
 connection.connect(err => {
@@ -72,7 +71,7 @@ const viewAllDepartments = () => {
 };
 
 const viewAllRoles = () => {
-    connection.query('SELECT r.id, r.title, d.name AS department, r.salary FROM roles r JOIN department d ON r.department_id = d.id',
+    connection.query('SELECT r.id, r.title, d.name AS department, r.salary FROM role r JOIN department d ON r.department_id = d.id',
     (err, res) => {
         if (err) throw err;
         console.table(res);
@@ -83,8 +82,8 @@ const viewAllRoles = () => {
 
 const viewAllEmployees = () => {
     connection.query(`SELECT e.id, e.first_name, e.last_name, r.title, d.name AS department, 
-    r.salary 
-    CONCAT(m.first_name, ' ', m.last_name) AS manger 
+    r.salary,
+    CONCAT(m.first_name, ' ', m.last_name) AS manager 
     FROM employee e 
     JOIN role r ON e.role_id = r.id 
     JOIN department d ON r.department_id = d.id
@@ -122,10 +121,18 @@ const addRole = () => {
     connection.query('SELECT id, name FROM department', (err, res) => {
         if (err) throw err;
 
-        const departmentNames = res.reduce((acc, curr) => {
-            acc[curr.name] = curr.id;
-            return acc;
-        }, {});
+        // const departmentNames = res.reduce((acc, curr) => {
+        //     acc[curr.name] = curr.id;
+        //     return acc;
+        // }, {}); 
+
+        const departmentNames = res;
+        const departmentChoices = departmentNames.map((ele) => {
+            return {
+                name: ele.name,
+                value: ele.id,
+            }
+        });
 
     inquirer.prompt([
         {
@@ -142,17 +149,18 @@ const addRole = () => {
             name: 'department',
             type: 'list',
             message: 'Please select department for your role',
-            choices: Object.keys(departmentNames),
+            choices: departmentChoices,
         }
     ])
     .then(answer => {
-        const departmentID = departmentNames[answer.department];
+        const departmentID = answer.department;
+        console.log(answer)
         connection.query(
-            'INSERt INTO role (title, salary,department_id) VALUES (?, ?, ?)',
-            [answer.role, answer.salary, answer.departmentID],
+            'INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)',
+            [answer.role, answer.salary, departmentID],
             function (err, res) {
                 if (err) throw err;
-                console.log('You have successfully addednew role');
+                console.log('You have successfully added new role');
                 startMenu();
             }
         );
@@ -164,19 +172,35 @@ const addEmployee = () => {
     connection.query('SELECT id, title FROM role', (err, res) => {
         if (err) throw err;
 
-        const roleNames = res.reduce((acc, curr) => {
-            acc[curr.title] = curr.id;
-            return acc;
-        }, {});
+        // const roleNames = res.reduce((acc, curr) => {
+        //     acc[curr.title] = curr.id;
+        //     return acc;
+        // }, {}); 
+
+        const roleNames = res;
+        const roleChoices = roleNames.map((ele) => {
+            return {
+                name: ele.title,
+                value: ele.id,
+            }
+        });
 
     connection.query('SELECT id, first_name, last_name, manager_id FROM employee', (err, res) => {
         if (err) throw err;
 
-        const managers = [];
+        // const managers = [];
 
-        res.forEach((employee) => {
-            const managerName = `${employee.first_name} ${employee.last_name}`;
-            managers[managerName] = employee.id;
+        // res.forEach((employee) => {
+        //     const managerName = `${employee.first_name} ${employee.last_name}`;
+        //     managers[managerName] = employee.id;
+        // });
+
+        const managerNames = res;
+        const managerChoices = managerNames.map((ele) => {
+            return {
+                name: `${ele.first_name} ${ele.last_name}`,
+                value: ele.id,
+            }
         });
 
     inquirer.prompt ([
@@ -194,18 +218,18 @@ const addEmployee = () => {
             name:'role',
             type: 'list',
             message: 'Please select your role within th ecompany',
-            choices: Object.keys(roleNames),
+            choices: roleChoices,
         },
         {
             name:'manager',
             type: 'list',
             message: 'Please select your manager',
-            choices: Object.keys(managers),
+            choices: managerChoices,
         }
     ])
         .then(answer => {
-            const roleID = roleNames[answer.roles];
-            const managerID = managers[answer.managers];
+            const roleID = answer.role;
+            const managerID = answer.manager;
             connection.query('INSERT INTO employee SET ?',
             {
                 first_name: answer.firstName,
@@ -223,7 +247,7 @@ const addEmployee = () => {
  });
 };
 
-const updateEmployeeRole = () => {
+const updateEmployee = () => {
     connection.query('SELECT id, CONCAT(first_name, " ", last_name) AS name FROM employee', (err, res) => {
         if (err) throw err;
 
@@ -235,10 +259,18 @@ const updateEmployeeRole = () => {
     connection.query('SELECT id, title FROM role', (err, res) => {
         if (err) throw err;
 
-        const roles = res.reduce((acc, curr) => {
-            acc[curr.name] = curr.id;
-            return acc;
-        }, {});
+        // const roles = res.reduce((acc, curr) => {
+        //     acc[curr.name] = curr.id;
+        //     return acc;
+        // }, {});
+
+        const roleNames = res;
+        const roleChoices = roleNames.map((ele) => {
+            return {
+                name: ele.title,
+                value: ele.id,
+            }
+        });
 
     inquirer.prompt ([
         {
@@ -251,12 +283,12 @@ const updateEmployeeRole = () => {
             name:'role',
             type: 'list',
             message: 'Please select new role:',
-            choices: Object.keys(roles),
+            choices: roleChoices,
         },
     ])
         .then(answer => {
             const employeeId = employees[answer.employee];
-            const roleId = roles[answer.role];
+            const roleId = answer.role;
 
             connection.query('UPDATE employee SET role_id = ? WHERE id = ?',
             [roleId,employeeId],
@@ -308,6 +340,4 @@ const deleteDepartment = () => {
     });
     });
 };
-
-
 
