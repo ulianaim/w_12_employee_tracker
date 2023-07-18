@@ -30,8 +30,6 @@ const startMenu = () => {
             'Add an employee',
             'Update an employee role',
             'Delete a department',
-            'Delete a role',
-            'Delete an employee',
             'Exit',
         ],
       })
@@ -121,11 +119,6 @@ const addRole = () => {
     connection.query('SELECT id, name FROM department', (err, res) => {
         if (err) throw err;
 
-        // const departmentNames = res.reduce((acc, curr) => {
-        //     acc[curr.name] = curr.id;
-        //     return acc;
-        // }, {}); 
-
         const departmentNames = res;
         const departmentChoices = departmentNames.map((ele) => {
             return {
@@ -172,11 +165,6 @@ const addEmployee = () => {
     connection.query('SELECT id, title FROM role', (err, res) => {
         if (err) throw err;
 
-        // const roleNames = res.reduce((acc, curr) => {
-        //     acc[curr.title] = curr.id;
-        //     return acc;
-        // }, {}); 
-
         const roleNames = res;
         const roleChoices = roleNames.map((ele) => {
             return {
@@ -187,13 +175,6 @@ const addEmployee = () => {
 
     connection.query('SELECT id, first_name, last_name, manager_id FROM employee', (err, res) => {
         if (err) throw err;
-
-        // const managers = [];
-
-        // res.forEach((employee) => {
-        //     const managerName = `${employee.first_name} ${employee.last_name}`;
-        //     managers[managerName] = employee.id;
-        // });
 
         const managerNames = res;
         const managerChoices = managerNames.map((ele) => {
@@ -258,11 +239,6 @@ const updateEmployee = () => {
 
     connection.query('SELECT id, title FROM role', (err, res) => {
         if (err) throw err;
-
-        // const roles = res.reduce((acc, curr) => {
-        //     acc[curr.name] = curr.id;
-        //     return acc;
-        // }, {});
 
         const roleNames = res;
         const roleChoices = roleNames.map((ele) => {
